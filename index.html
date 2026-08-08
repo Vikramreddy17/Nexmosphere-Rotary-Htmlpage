@@ -649,7 +649,7 @@ if (typeof BSMessagePort !== 'undefined') {
     console.log("BrightSign MessagePort detected");
     
     const bsPort = new BSMessagePort();
-    bsPort.onmessage = function(msg) {
+    bsPort.onbsmessage = function(msg) {
         console.log("BrightSign message received:", msg.data);
         parseRotaryData(msg.data);
     };

@@ -2,7 +2,7 @@
 
 A modern, highly responsive product showcase web application designed to run on a **BrightSign** media player integrated with a **Nexmosphere Rotary Encoder** sensor. 
 
-The web page listens to incoming rotary encoder status messages through BrightSign's HTML5 `BSMessagePort` interface, updating the displayed product dynamically in real-time. It also includes an interactive local simulator panel for quick browser-based debugging without needing hardware.
+The web page listens to incoming rotary encoder status messages through BrightSign's HTML5 `BSMessagePort` interface (using the `onbsmessage` handler), updating the displayed product dynamically in real-time. It also includes an interactive local simulator panel for quick browser-based debugging without needing hardware.
 
 ---
 
@@ -10,57 +10,51 @@ The web page listens to incoming rotary encoder status messages through BrightSi
 
 ```text
 Nexmosphere-Rotary-Htmlpage/
-├── index.html       # Single-page showcase app with responsive CSS, JS & Simulator
-├── README.md        # Documentation, hardware & deployment instructions
-└── .gitignore       # Git exclusion file
+├── index.html               # Single-page showcase app with responsive CSS, JS & Simulator
+├── nexmosphere_plugin.brs   # BrightSign presentation plug-in to route serial input
+├── README.md                # Documentation, hardware & deployment instructions
+└── .gitignore               # Git exclusion file
 ```
 
 ---
 
-## 🛠️ Hardware Integration Setup
+## 🛠️ Hardware & BrightSign Setup Guide
 
-To get this running on physical hardware, follow these setup guides:
+To connect the Nexmosphere rotary inputs to the HTML page, you must configure BrightSign to listen on the serial port and forward messages to the HTML widget. There are two ways to do this:
 
-### 1. Hardware Connections
-1. Connect the **Nexmosphere Rotary Sensor** (typically model ER-series) to a **Nexmosphere Controller** (e.g., X-Range controller).
-2. Connect the Nexmosphere Controller to the **BrightSign** player using a USB or serial RS-232 cable.
-3. Note the serial port configuration of the controller (usually `9600` baud rate, 8 data bits, no parity, 1 stop bit).
+### Option A: Using the BrightScript Plugin (Recommended & Easiest)
+We have provided a plug-in script (`nexmosphere_plugin.brs`) in this repository. It automatically handles the serial port connection and forwards all incoming messages to your HTML widget.
 
-### 2. BrightScript Autorun Configuration
-To relay Nexmosphere serial commands to the HTML page, you must write a BrightScript `autorun.brs` script or configure it in BrightAuthor. The script reads from the serial port and posts the data to the HTML widget.
+1. **Add the Plugin in BrightAuthor:**
+   - In BrightAuthor, go to **Presentation Properties** -> **Autorun** tab.
+   - Under **Selected Script Plugins**, click **Add** and upload `nexmosphere_plugin.brs`.
+   - Set the plugin name to: `nexmosphere_plugin`.
+2. **Done!** The plugin will run in the background, intercept all serial messages from the Nexmosphere controller, and send them to the HTML site automatically.
 
-Example BrightScript snippet to forward serial events:
-```brightscript
-' Initialize serial port
-serial = CreateObject("roSerialPort", 0, 9600) ' Port 0 or USB port number
+---
 
-' Initialize HTML widget
-htmlWidget = CreateObject("roHtmlWidget", rect)
-htmlWidget.SetUrl("file:///sd:/index.html")
-htmlWidget.Show()
+### Option B: Pure BrightAuthor UI Setup (No Code)
+If you prefer not to use plugins and want to do it purely inside the BrightAuthor user interface:
 
-' Enable message port communication
-port = CreateObject("roMessagePort")
-serial.SetPort(port)
-htmlWidget.SetPort(port)
-
-' Message Loop
-while true
-    msg = wait(0, port)
-    if type(msg) = "roSerialPortEvent" then
-        dataStr = msg.GetString()
-        ' Example serial data format: "X002B[Dr=4]"
-        ' Send directly to the HTML JavaScript context
-        htmlWidget.PostJSMessage({data: dataStr})
-    end if
-end while
-```
-
-### 3. Rotary Serial Protocol Details
-The Nexmosphere rotary encoder generates serial packet strings indicating the current position:
-- **Idle State:** `X002B[Dr=0]`
-- **Product Positions:** `X002B[Dr=1]` up to `X002B[Dr=20]`
-- When the position changes, the JavaScript `parseRotaryData(dataString)` parses the position integer and switches products accordingly.
+1. **Set Up Serial Configuration:**
+   - Go to **Presentation Properties** -> **Interactive** tab -> **Serial** tab.
+   - Ensure the serial port baud rate is set to match the Nexmosphere controller (normally `9600` baud).
+2. **Define a User Variable:**
+   - Go to **Presentation Properties** -> **Variables** tab.
+   - Add a new variable called `RotaryPosition`. Set its default value to `00`.
+3. **Configure the HTML5 State and Serial Events:**
+   - In your interactive presentation playlist, place your HTML5 state pointing to the URL of this page (GitHub Pages URL).
+   - Click and drag a **Serial Input** event icon onto the HTML5 state. Point the transition line back to the HTML5 state itself (creating a self-loop).
+   - In the **Serial Input** event properties:
+     - Set the matching command string to: `X002B[Dr=<*>]` (using `<*>` as a wildcard).
+     - Under the **Variables** tab in the event settings, assign the wildcard value to the `RotaryPosition` user variable.
+4. **Trigger HTML5 Message Event:**
+   - Under the **Advanced** tab of the Serial Input event properties:
+     - Click **Add Action**.
+     - Choose command category: **HTML5**.
+     - Choose action command: **Send HTML5 Message** (or **Send Message to HTML Widget**).
+     - For the parameter/payload value, type: `X002B[Dr=%%RotaryPosition%%]` (or use the wildcard expression directly to construct `X002B[Dr=<*>]` so it matches the format expected by the HTML javascript parser).
+5. **Publish:** Publish your presentation to the player.
 
 ---
 
