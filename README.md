@@ -2,7 +2,7 @@
 
 A modern, highly responsive product showcase web application designed to run on a **BrightSign** media player integrated with a **Nexmosphere Rotary Encoder** sensor. 
 
-The web page listens to incoming rotary encoder status messages through BrightSign's HTML5 `BSMessagePort` interface (using the `onbsmessage` handler), updating the displayed product dynamically in real-time. It also includes an interactive local simulator panel for quick browser-based debugging without needing hardware.
+The web page listens to incoming rotary encoder status messages through BrightSign's HTML5 `BSMessagePort` interface (using a dual-compatible event loader that works with both modern Node.js and legacy environments), updating the displayed product dynamically in real-time. It also includes an interactive local simulator panel for quick browser-based debugging without needing hardware.
 
 ---
 
@@ -20,35 +20,44 @@ Nexmosphere-Rotary-Htmlpage/
 
 ## 🛠️ Hardware & BrightSign Setup Guide
 
-To connect the Nexmosphere rotary inputs to the HTML page, you must configure BrightSign to listen on the serial port and forward messages to the HTML widget. There are two ways to do this:
+To connect the Nexmosphere rotary inputs to the HTML page, you must configure BrightSign to listen on Serial Port 2 (USB Serial) at `115200` baud.
 
-### Option A: Using the BrightScript Plugin (Recommended & Easiest)
-We have provided a plug-in script (`nexmosphere_plugin.brs`) in this repository. It automatically handles the serial port connection and forwards all incoming messages to your HTML widget.
-
-1. **Add the Plugin in BrightAuthor:**
-   - In BrightAuthor, go to **Presentation Properties** -> **Autorun** tab.
-   - Under **Selected Script Plugins**, click **Add** and upload `nexmosphere_plugin.brs`.
-   - Set the plugin name to: `nexmosphere_plugin`.
-2. **Done!** The plugin will run in the background, intercept all serial messages from the Nexmosphere controller, and send them to the HTML site automatically.
+> [!WARNING]
+> **Avoid Serial Port Conflicts:**
+> You must choose **either** Option A (Plugin Script) **or** Option B (BrightAuthor GUI Events). Do not use both on the same port at the same time, or they will collide and fail to receive data.
 
 ---
 
-### Option B: Pure BrightAuthor UI Setup (No Code)
-If you prefer not to use plugins and want to do it purely inside the BrightAuthor user interface:
+### Option A: Using the BrightScript Plugin (Recommended & Easiest)
+We have provided a custom plug-in script (`nexmosphere_plugin.brs`) in this repository. It opens **Port 2 at 115200 baud**, enables line-buffering to prevent packet fragmentation, and forwards all incoming messages to your HTML widget.
+
+1. **Add the Plugin in BrightAuthor:**
+   - In BrightAuthor / BrightAuthor:connected, go to **Presentation Properties** -> **Autorun** tab (or Script Plugins tab).
+   - Under **Selected Script Plugins**, click **Add** and upload `nexmosphere_plugin.brs`.
+   - Set the plugin name to: `nexmosphere_plugin`.
+2. **Deconflict the Interface:**
+   - Ensure there are **no** "Serial Input" events or state transitions defined in your interactive presentation playlist.
+3. **Publish:** Publish your presentation to the player. The plugin will run in the background, read the port, and route messages to your HTML widget automatically.
+
+---
+
+### Option B: Pure BrightAuthor GUI Setup (No Code)
+If you prefer to define interactive transitions in the BrightAuthor interface without using the plugin:
 
 1. **Set Up Serial Configuration:**
    - Go to **Presentation Properties** -> **Interactive** tab -> **Serial** tab.
-   - Ensure the serial port baud rate is set to match the Nexmosphere controller (normally `9600` baud).
+   - Configure **Port 2** to `115200` baud, 8 data bits, no parity, 1 stop bit, ASCII, CR+LF.
 2. **Define a User Variable:**
    - Go to **Presentation Properties** -> **Variables** tab.
    - Add a new variable called `RotaryPosition`. Set its default value to `00`.
 3. **Configure the HTML5 State and Serial Events:**
-   - In your interactive presentation playlist, place your HTML5 state pointing to the URL of this page (GitHub Pages URL).
+   - In your interactive playlist, place your HTML5 widget pointing to this page's URL (GitHub Pages URL).
    - Click and drag a **Serial Input** event icon onto the HTML5 state. Point the transition line back to the HTML5 state itself (creating a self-loop).
    - In the **Serial Input** event properties:
+     - Select Port: **2**
      - Set the matching command string to: `X002B[Dr=<*>]` (using `<*>` as a wildcard).
      - Under the **Variables** tab in the event settings, assign the wildcard value to the `RotaryPosition` user variable.
-4. **Trigger HTML5 Message Event:**
+4. **Trigger HTML5 Message Action:**
    - Under the **Advanced** tab of the Serial Input event properties:
      - Click **Add Action**.
      - Choose command category: **HTML5**.

@@ -1,31 +1,33 @@
 ' =========================================================
 ' BRIGHTSIGN PLUG-IN SCRIPT FOR NEXMOSPHERE SERIAL ROUTING
 ' =========================================================
-' This plugin listens to Serial Port 0 (or USB serial) and
-' forwards all Nexmosphere data directly to the HTML5 widget.
-' Add this file as an "HTML5 Plugin" in BrightAuthor.
+' Target: Port 2 (USB Serial), Baud Rate: 115200, Line Mode: CR delimited
+' This plugin routes serial commands to the HTML5 widget.
+'
+' IMPORTANT: To prevent conflicts, do NOT configure any 
+' "Serial Input" events in the BrightAuthor UI playlist if using this plugin.
 
 Function nexmosphere_plugin_Initialize(msgPort As Object, userVariables As Object, bsp As Object) As Object
-    print "--- Nexmosphere Plugin Initialize ---"
+    print "--- Nexmosphere 115200 Baud Plugin Initialize ---"
     
     plugin = CreateObject("roAssociativeArray")
     plugin.port = msgPort
     plugin.bsp = bsp
     plugin.ProcessEvent = nexmosphere_plugin_ProcessEvent
     
-    ' In BrightAuthor, the serial port configuration might already be open.
-    ' If not, we open serial port 0 (RS-232) or USB ports (1, 2, etc.) at 9600 baud.
-    plugin.serial = CreateObject("roSerialPort", 0, 9600)
-    if plugin.serial = invalid then
-        ' Fallback to USB serial (Port 2 is typically the first USB-serial converter)
-        plugin.serial = CreateObject("roSerialPort", 2, 9600)
-    end if
+    ' Open Serial Port 2 (USB Serial) at 115200 baud
+    plugin.serial = CreateObject("roSerialPort", 2, 115200)
     
     if plugin.serial <> invalid then
-        print "Nexmosphere Plugin: Serial port opened successfully."
+        print "Nexmosphere Plugin: Serial port 2 opened successfully at 115200 baud."
+        
+        ' Configure port to buffer until a Carriage Return (CR - ASCII 13) is received.
+        ' This prevents packet fragmentation.
+        plugin.serial.SetLineMode(true)
+        plugin.serial.SetLineEventChar(13)
         plugin.serial.SetPort(msgPort)
     else
-        print "Nexmosphere Plugin: WARNING - Could not open Serial Port. It might already be opened by BrightAuthor."
+        print "Nexmosphere Plugin: ERROR - Could not open Serial Port 2. Make sure it isn't occupied by BrightAuthor's built-in Serial configurations."
     end if
     
     return plugin
@@ -37,7 +39,7 @@ Function nexmosphere_plugin_ProcessEvent(event As Object) As Boolean
     ' Check if the event is serial port data
     if type(event) = "roSerialPortEvent" then
         dataStr = event.GetString()
-        print "Nexmosphere Plugin: Received Serial Data: "; dataStr
+        print "Nexmosphere Plugin: Received Serial Line: "; dataStr
         
         ' Locate the HTML widget inside the presentation to forward the message
         htmlWidget = invalid
