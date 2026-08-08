@@ -44,8 +44,15 @@ Function nexmosphere_plugin_ProcessEvent(event As Object) As Boolean
         ' Locate the HTML widget inside the presentation to forward the message
         htmlWidget = invalid
         
-        ' Traverse zones to find the roHtmlWidget object
-        if m.bsp <> invalid and m.bsp.zones <> invalid then
+        ' 1. Check if the HTML widget is registered globally or in local context
+        if type(m.htmlwidget) = "roHtmlWidget" or type(m.htmlwidget) = "roHtmlWidget2" then
+            htmlWidget = m.htmlwidget
+        else if type(m.widget) = "roHtmlWidget" or type(m.widget) = "roHtmlWidget2" then
+            htmlWidget = m.widget
+        end if
+        
+        ' 2. If not found, traverse zones to locate the roHtmlWidget object
+        if htmlWidget = invalid and m.bsp <> invalid and m.bsp.zones <> invalid then
             for each zone in m.bsp.zones
                 if zone.widgets <> invalid then
                     for each widget in zone.widgets
@@ -57,6 +64,13 @@ Function nexmosphere_plugin_ProcessEvent(event As Object) As Boolean
                 end if
                 if htmlWidget <> invalid then exit for
             next
+        end if
+        
+        ' 3. Check bsp level context directly as a last resort
+        if htmlWidget = invalid and m.bsp <> invalid then
+            if type(m.bsp.htmlwidget) = "roHtmlWidget" or type(m.bsp.htmlwidget) = "roHtmlWidget2" then
+                htmlWidget = m.bsp.htmlwidget
+            end if
         end if
         
         ' If found, post the data as a JS message (received via onbsmessage in HTML)
