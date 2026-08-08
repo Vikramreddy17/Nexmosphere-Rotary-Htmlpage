@@ -604,12 +604,23 @@ function showIdleState() {
 function parseRotaryData(dataString) {
     console.log("Rotary data received:", dataString);
 
+    // Support both raw string payloads and object structures like { data: "X002B[Dr=01]" }
+    let rawStr = dataString;
+    if (dataString && typeof dataString === 'object') {
+        rawStr = dataString.data || dataString.message || JSON.stringify(dataString);
+    }
+
+    if (typeof rawStr !== 'string') {
+        console.log("Invalid rotary message type:", typeof rawStr);
+        return;
+    }
+
     // Accept 0–20, with either 1 or 2 digits
     const regex = /X002B\[Dr=(\d{1,2})\]/;
-    const match = dataString.match(regex);
+    const match = rawStr.match(regex);
 
     if (!match || !match[1]) {
-        console.log("Invalid rotary message:", dataString);
+        console.log("Invalid rotary message format:", rawStr);
         return;
     }
 
@@ -643,18 +654,43 @@ function parseRotaryData(dataString) {
 }
 
 // ---------------------------------------------------------
-// BRIGHTSIGN MESSAGE PORT
+// BRIGHTSIGN MESSAGE PORT (Dual-Compatibility: Modern & Legacy)
 // ---------------------------------------------------------
-if (typeof BSMessagePort !== 'undefined') {
-    console.log("BrightSign MessagePort detected");
-    
-    const bsPort = new BSMessagePort();
-    bsPort.onbsmessage = function(msg) {
-        console.log("BrightSign message received:", msg.data);
-        parseRotaryData(msg.data);
-    };
-} else {
-    console.log("BSMessagePort is NOT available");
+let bsPort = null;
+
+// 1. Try Modern BrightSign Node.js integration
+if (typeof require !== 'undefined') {
+    try {
+        const MessagePortClass = require("@brightsign/messageport");
+        bsPort = new MessagePortClass();
+        console.log("BrightSign Modern MessagePort initialized via require");
+        bsPort.addEventListener("bsmessage", function(msg) {
+            console.log("BrightSign modern message received:", msg);
+            // In modern listener, msg is an event object. Payload is in msg.data or msg.detail
+            const payload = (msg && typeof msg === 'object' && 'data' in msg) ? msg.data : msg;
+            parseRotaryData(payload);
+        });
+    } catch (e) {
+        console.log("Node.js require('@brightsign/messageport') not available or failed:", e.message);
+    }
+}
+
+// 2. Fallback to Legacy BrightSign MessagePort
+if (!bsPort && typeof BSMessagePort !== 'undefined') {
+    console.log("BrightSign Legacy MessagePort detected");
+    try {
+        bsPort = new BSMessagePort();
+        bsPort.onbsmessage = function(msg) {
+            console.log("BrightSign legacy message received:", msg.data);
+            parseRotaryData(msg.data);
+        };
+    } catch (e) {
+        console.error("Failed to initialize legacy BSMessagePort:", e);
+    }
+}
+
+if (!bsPort) {
+    console.log("BSMessagePort is NOT available in this environment (running in local browser)");
 }
 
 // ---------------------------------------------------------
