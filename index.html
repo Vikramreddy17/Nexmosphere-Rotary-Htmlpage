@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Showcase - Nexmosphere Rotary Control</title>
+<link rel="preconnect" href="https://images.unsplash.com">
+<style>
+:root {
+    --bg-1: #070a1c;
+    --bg-2: #10142e;
+    --surface: rgba(255, 255, 255, 0.04);
+    --border: rgba(255, 255, 255, 0.1);
+    --border-glow: rgba(124, 108, 255, 0.55);
+    --accent: #7c6cff;
+    --accent-soft: #a99cff;
+    --text: #f4f5ff;
+    --text-dim: rgba(244, 245, 255, 0.62);
+    --radius: 16px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+    background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(124, 108, 255, 0.16), transparent 60%),
+        radial-gradient(900px 500px at 90% 110%, rgba(64, 130, 255, 0.12), transparent 60%),
+        linear-gradient(160deg, var(--bg-1), var(--bg-2));
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+.container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: clamp(16px, 3vw, 40px);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 0 clamp(16px, 3vw, 32px);
+}
+
+.counter-badge {
+    font-size: clamp(13px, 1.4vw, 16px);
+    letter-spacing: 4px;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 22px;
+    background: var(--surface);
+    backdrop-filter: blur(8px);
+}
+.counter-badge b { color: var(--text); font-weight: 600; }
+
+.showcase {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: clamp(24px, 4vw, 64px);
+    align-items: center;
+    flex: 1;
+    position: relative;
+}
+
+.hero-section {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-stage {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    max-height: 62vh;
+    border-radius: calc(var(--radius) + 8px);
+    border: 1px solid var(--border);
+    background:
+        radial-gradient(60% 55% at 50% 100%, rgba(124, 108, 255, 0.28), transparent 70%),
+        var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+.hero-stage::after {
+    content: "";
+    position: absolute;
+    inset: auto 12% 8%;
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(124, 108, 255, 0.65), transparent 70%);
+    filter: blur(6px);
+    pointer-events: none;
+}
+
+.hero-stage img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
+    transform: scale(1.03);
+    transition: opacity .5s ease, transform .6s ease;
+}
+.hero-stage img.loaded { opacity: 1; transform: scale(1); }
+
+.hero-skeleton {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.06) 50%, transparent 70%);
+    background-size: 200% 100%;
+    animation: shimmer 1.3s infinite linear;
+    pointer-events: none;
+}
+.hero-skeleton.hidden { display: none; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+.nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: clamp(42px, 4vw, 54px);
+    height: clamp(42px, 4vw, 54px);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: rgba(10, 12, 32, 0.6);
+    backdrop-filter: blur(8px);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+    transition: border-color .25s, box-shadow .25s, background .25s;
+    font-size: 0;
+}
+.nav-arrow svg { width: 20px; height: 20px; stroke: currentColor; }
+.nav-arrow:hover, .nav-arrow:focus-visible {
+    border-color: var(--border-glow);
+    box-shadow: 0 0 24px rgba(124, 108, 255, 0.35);
+    background: rgba(124, 108, 255, 0.15);
+    outline: none;
+}
+.nav-arrow.prev { left: clamp(-8px, -1vw, -12px); }
+.nav-arrow.next { right: clamp(-8px, -1vw, -12px); }
+
+.product-info {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(14px, 2vw, 24px);
+    min-width: 0;
+}
+
+.product-category {
+    font-size: clamp(11px, 1.1vw, 13px);
+    letter-spacing: 4px;
+    color: var(--accent-soft);
+    font-weight: 700;
+}
+
+.product-title {
+    font-size: clamp(30px, 4.5vw, 58px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+}
+
+.product-description {
+    font-size: clamp(14px, 1.3vw, 17px);
+    line-height: 1.65;
+    color: var(--text-dim);
+    max-width: 46ch;
+}
+
+.specs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(8px, 1.2vw, 16px);
+}
+
+.spec {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    padding: clamp(10px, 1.4vw, 16px) 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    transition: border-color .25s, transform .25s;
+}
+.spec:hover { border-color: var(--border-glow); transform: translateY(-2px); }
+
+.spec-icon { width: 26px; height: 26px; color: var(--accent-soft); }
+.spec-icon svg { width: 100%; height: 100%; stroke: currentColor; }
+
+.spec-value {
+    font-size: clamp(11px, 1.1vw, 13px);
+    font-weight: 700;
+    letter-spacing: .3px;
+}
+.spec-label {
+    font-size: clamp(10px, 1vw, 12px);
+    color: var(--text-dim);
+}
+
+.price-section {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.price {
+    font-size: clamp(30px, 3.6vw, 48px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.shipping {
+    font-size: clamp(12px, 1.2vw, 14px);
+    color: var(--accent-soft);
+    font-weight: 600;
+}
+
+.carousel-container { position: relative; margin-top: clamp(20px, 3.5vw, 44px); }
+
+.thumbnails {
+    display: flex;
+    gap: clamp(10px, 1.4vw, 16px);
+    overflow-x: auto;
+    padding: clamp(12px, 1.6vw, 20px);
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) + 6px);
+    background: rgba(0, 0, 0, 0.28);
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(124, 108, 255, 0.4) transparent;
+}
+.thumbnails::-webkit-scrollbar { height: 5px; }
+.thumbnails::-webkit-scrollbar-thumb { background: rgba(124, 108, 255, 0.4); border-radius: 3px; }
+
+.thumbnail {
+    flex-shrink: 0;
+    width: clamp(84px, 9vw, 120px);
+    border: 2px solid rgba(124, 108, 255, 0.22);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color .25s, transform .25s, box-shadow .25s;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+.thumbnail:hover, .thumbnail:focus-visible {
+    border-color: var(--border-glow);
+    transform: translateY(-3px);
+    outline: none;
+}
+.thumbnail.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 22px rgba(124, 108, 255, 0.45);
+}
+
+.thumb-img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.thumb-meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 6px;
+    background: rgba(7, 10, 28, 0.85);
+    border-top: 1px solid var(--border);
+}
+.thumb-icon { width: 15px; height: 15px; color: var(--accent-soft); flex-shrink: 0; }
+.thumb-icon svg { width: 100%; height: 100%; stroke: currentColor; }
+.thumb-num {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+}
+.thumbnail.active .thumb-num { color: var(--text); }
+
+.dots {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: clamp(14px, 2vw, 22px) 0 6px;
+    flex-wrap: wrap;
+}
+.dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.18);
+    cursor: pointer;
+    transition: all .3s;
+    padding: 0;
+}
+.dot.active { background: var(--accent); width: 26px; border-radius: 4px; }
+.dot:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
+
+.footer-label {
+    text-align: center;
+    letter-spacing: 6px;
+    font-size: clamp(10px, 1vw, 12px);
+    color: var(--text-dim);
+    padding: 10px 0 4px;
+}
+
+@media (max-width: 1024px) {
+    .showcase { grid-template-columns: 1fr; gap: 28px; }
+    .hero-stage { max-height: 48vh; }
+    .product-info { align-items: center; text-align: center; }
+    .product-description { max-width: 60ch; }
+    .nav-arrow.prev { left: 8px; }
+    .nav-arrow.next { right: 8px; }
+}
+@media (max-width: 640px) {
+    .specs { grid-template-columns: repeat(2, 1fr); }
+    .hero-stage { aspect-ratio: 16 / 11; max-height: none; }
+    .nav-arrow { top: auto; bottom: 12px; transform: none; }
+    .nav-arrow.prev { left: 12px; }
+    .nav-arrow.next { right: 12px; }
+    .dots { display: none; }
+}
+@media (min-width: 1600px) {
+    .container { max-width: 1680px; }
+    .hero-stage { max-height: 66vh; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <header class="header">
+        <div class="counter-badge"><b id="counterCurrent">00</b> / <span id="counterTotal">20</span></div>
+    </header>
+
+    <main class="showcase">
+        <button class="nav-arrow prev" onclick="prevProduct()" aria-label="Previous product">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+
+        <div class="hero-section">
+            <div class="hero-stage">
+                <div class="hero-skeleton" id="heroSkeleton"></div>
+                <img id="heroImage" alt="Product image">
+            </div>
+        </div>
+
+        <div class="product-info">
+            <div class="product-category" id="category"></div>
+            <h1 class="product-title" id="title"></h1>
+            <p class="product-description" id="description"></p>
+            <div class="specs" id="specs"></div>
+            <div class="price-section">
+                <div class="price" id="price"></div>
+            </div>
+        </div>
+
+        <button class="nav-arrow next" onclick="nextProduct()" aria-label="Next product">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+    </main>
+
+    <div class="carousel-container">
+        <div class="thumbnails" id="thumbnails" role="tablist" aria-label="Products"></div>
+    </div>
+
+    <div class="dots" id="dots"></div>
+    <div class="footer-label">PRODUCT SHOWCASE</div>
+</div>
+
+<script>
+/* --- ICONS AND PRODUCTS DATA --- */
+const ICONS = {
+    LAPTOPS:     '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="11" rx="1.5"/><path d="M2 19h20l-2-4H4z"/></svg>',
+    SMARTPHONES: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>',
+    CAMERAS:     '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h3l2-2.5h8L18 8h3v11H3z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+    DRONES:      '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M7 7l2.5 2.5M17 7l-2.5 2.5M7 17l2.5-2.5M17 17l-2.5-2.5"/></svg>',
+    AUDIO:       '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13a8 8 0 0116 0"/><rect x="3" y="13" width="4" height="7" rx="1.5"/><rect x="17" y="13" width="4" height="7" rx="1.5"/></svg>',
+    WEARABLES:   '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.5"/><path d="M9 7V3h6v4M9 17v4h6v-4"/></svg>',
+    TABLETS:     '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3" width="15" height="18" rx="2.5"/><path d="M10.5 18h3"/></svg>',
+    DISPLAYS:    '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M9 20h6M12 16v4"/></svg>',
+    PERIPHERALS: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="5"/><path d="M12 6.5v3.5"/></svg>',
+    GAMING:      '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9h12a4 4 0 014 4.5l-.7 3.6a2.5 2.5 0 01-4.4 1L15 16H9l-1.9 2.1a2.5 2.5 0 01-4.4-1L2 13.5A4 4 0 016 9z"/><path d="M8 12v3M6.5 13.5h3M16.5 12.2h.01M18.5 14.2h.01"/></svg>',
+    VR:          '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 012-2h14a2 2 0 012 2v6a2 2 0 01-2 2h-4l-2-2h-2l-2 2H5a2 2 0 01-2-2z"/></svg>',
+    STREAMING:   '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="6"/><circle cx="12" cy="10" r="2.2"/><path d="M8 21h8M12 16v5"/></svg>',
+    ACCESSORIES: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>'
+};
+
+const SPEC_ICONS = [
+    '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M9 20h6M12 16v4"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="17" height="8" rx="2"/><path d="M19.5 10.5h2v3h-2M6 11v2M9.5 11v2"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-7 0-13 4-15 12 0 0 5 2 9-1s6-11 6-11z"/><path d="M5 16c2-3 5-5 9-6"/></svg>'
+];
+
+const SPEC_LABELS = ['Chip / Core', 'Display', 'Battery', 'Weight'];
+const FALLBACK_IMG = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80&auto=format&fit=crop';
+
+const products = [
+    { title: "Titan Book Pro",      category: "LAPTOPS",     price: 249900, description: "Liquid Retina XDR display and the most advanced chip ever in a personal computer.", image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8", specs: ["M3 Pro", "Retina XDR", "22 hrs", "1.6 kg"] },
+    { title: "Ultra Phone 15",      category: "SMARTPHONES", price: 129900, description: "Revolutionary camera system with advanced computational photography.", image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9", specs: ["Snapdragon 8", "6.7\" OLED", "24 hrs", "240 g"] },
+    { title: "Pro Camera X",        category: "CAMERAS",     price: 399900, description: "Professional mirrorless with 45MP full-frame sensor and 8K video recording.", image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32", specs: ["45MP FF", "8K Video", "14 fps", "950 g"] },
+    { title: "Air Drone Max",       category: "DRONES",      price: 79900,  description: "Compact folding drone with 4K stabilized camera and 30-minute flight time.", image: "https://images.unsplash.com/photo-1473968512647-3e447244af8f", specs: ["4K Cam", "GPS Lock", "30 min", "570 g"] },
+    { title: "Studio Headphones",   category: "AUDIO",       price: 59900,  description: "Professional over-ear headphones with adaptive active noise cancellation.", image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e", specs: ["50mm Driver", "ANC Pro", "40 hrs", "250 g"] },
+    { title: "Gaming Headset RGB",  category: "GAMING",      price: 29900,  description: "Immersive esports headset with 7.1 surround sound and broadcast-grade mic.", image: "https://images.unsplash.com/photo-1599669454699-248893623440", specs: ["7.1 Sound", "USB DAC", "20 hrs", "300 g"] },
+    { title: "Smart Watch Pro",     category: "WEARABLES",   price: 69900,  description: "Advanced health monitoring with ECG, SpO2 and multi-band GPS tracking.", image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30", specs: ["AMOLED", "Dual GPS", "7 days", "45 g"] },
+    { title: "Tablet Ultra 12.9",   category: "TABLETS",     price: 119900, description: "Edge-to-edge OLED tablet with desktop-class chip, stylus and keyboard support.", image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0", specs: ["M2 Chip", "12.9\" OLED", "10 hrs", "650 g"] },
+    { title: "HomePod Sphere",      category: "AUDIO",       price: 39900,  description: "Room-filling 360° smart speaker with spatial audio and voice assistant.", image: "https://images.unsplash.com/photo-1589003077984-894e133dabab", specs: ["360° Audio", "Spatial", "Wired", "850 g"] },
+    { title: "Monitor 4K Studio",   category: "DISPLAYS",    price: 109900, description: "32-inch 4K HDR monitor with 144Hz refresh and single-cable USB-C.", image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf", specs: ["4K HDR", "144 Hz", "USB-C 90W", "8.2 kg"] },
+    { title: "Mech Keyboard 75",    category: "PERIPHERALS", price: 24900,  description: "Gasket-mounted 75% mechanical keyboard with hot-swap switches and RGB.", image: "https://images.unsplash.com/photo-1541140532154-b024d705b90a", specs: ["Hot-swap", "RGB", "Wireless", "1.2 kg"] },
+    { title: "Mouse Pro Wireless",  category: "PERIPHERALS", price: 12900,  description: "Ergonomic wireless mouse with precision tracking on any surface.", image: "https://images.unsplash.com/photo-1527814050087-3793815479db", specs: ["18K DPI", "8K Polling", "80 hrs", "120 g"] },
+    { title: "Controller Elite 2",  category: "GAMING",      price: 17900,  description: "Pro controller with adaptive triggers, back paddles and swappable sticks.", image: "https://images.unsplash.com/photo-1592840496694-26d035b52b48", specs: ["Haptics", "Paddles", "20 hrs", "280 g"] },
+    { title: "VR Headset Vision",   category: "VR",          price: 149900, description: "Next-gen standalone VR with dual 4K displays and inside-out tracking.", image: "https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac", specs: ["Dual 4K", "110° FOV", "2.5 hrs", "650 g"] },
+    { title: "Webcam 4K Stream",    category: "STREAMING",   price: 34900,  description: "Professional 4K webcam with AI auto-framing and low-light correction.", image: "https://images.unsplash.com/photo-1614680376593-902f74cf0d41", specs: ["4K 60fps", "AI Frame", "USB-C", "400 g"] },
+    { title: "Studio Mic Pro",      category: "STREAMING",   price: 24900,  description: "Broadcast-grade condenser microphone with zero-latency monitoring.", image: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc", specs: ["Cardioid", "24-bit", "Zero Lat.", "450 g"] },
+    { title: "Power Bank 200W",     category: "ACCESSORIES", price: 19900,  description: "High-capacity power bank with 200W output and smart LED display.", image: "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5", specs: ["200W", "25000 mAh", "LED Info", "1.2 kg"] },
+    { title: "GaN Charger 100W",    category: "ACCESSORIES", price: 8900,   description: "Pocket-size 100W GaN charger that powers laptop, phone and watch together.", image: "https://images.unsplash.com/photo-1583863788434-e58a36330cf0", specs: ["100W GaN", "3 Ports", "PD 3.1", "280 g"] },
+    { title: "Cable Pro 240W",      category: "ACCESSORIES", price: 4900,   description: "Braided USB-C cable with 240W power delivery and 40Gbps data.", image: "https://images.unsplash.com/photo-1621532623489-223b01d81caf", specs: ["240W PD", "40 Gbps", "Braided", "80 g"] },
+    { title: "Alu Stand Deluxe",    category: "ACCESSORIES", price: 12900,  description: "Height-adjustable aluminium laptop stand with cable management.", image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46", specs: ["Aluminium", "Adjustable", "15kg Load", "800 g"] }
+];
+
+let currentIndex = 0;
+const formatINR = (n) => "₹" + n.toLocaleString("en-IN");
+const imgURL = (base, w) => `${base}?w=${w}&q=80&auto=format&fit=crop`;
+
+function renderThumbnails() {
+    const container = document.getElementById("thumbnails");
+    container.innerHTML = products.map((p, i) => `
+        <button class="thumbnail ${i === currentIndex ? "active" : ""}"
+                role="tab" aria-selected="${i === currentIndex}"
+                aria-label="${p.title}"
+                onclick="loadProduct(${i})">
+            <img class="thumb-img" loading="lazy"
+                 src="${imgURL(p.image, 240)}"
+                 alt="${p.title}"
+                 onerror="this.onerror=null;this.src='${FALLBACK_IMG}'">
+            <span class="thumb-meta">
+                <span class="thumb-icon">${ICONS[p.category] || ICONS.ACCESSORIES}</span>
+                <span class="thumb-num">${String(i + 1).padStart(2, "0")}</span>
+            </span>
+        </button>
+    `).join("");
+}
+
+function renderDots() {
+    const container = document.getElementById("dots");
+    container.innerHTML = products.map((p, i) => `
+        <button class="dot ${i === currentIndex ? "active" : ""}"
+                aria-label="Go to ${p.title}"
+                onclick="loadProduct(${i})"></button>
+    `).join("");
+}
+
+function loadProduct(index) {
+    currentIndex = index;
+    const p = products[index];
+
+    const hero = document.getElementById("heroImage");
+    const skeleton = document.getElementById("heroSkeleton");
+    hero.classList.remove("loaded");
+    skeleton.classList.remove("hidden");
+
+    const finalSrc = imgURL(p.image, 1200);
+    const pre = new Image();
+    pre.onload = () => {
+        hero.src = finalSrc;
+        hero.classList.add("loaded");
+        skeleton.classList.add("hidden");
+    };
+    pre.onerror = () => {
+        hero.src = FALLBACK_IMG;
+        hero.classList.add("loaded");
+        skeleton.classList.add("hidden");
+    };
+    pre.src = finalSrc;
+
+    document.getElementById("title").textContent = p.title;
+    document.getElementById("category").textContent = p.category;
+    document.getElementById("description").textContent = p.description;
+    
+    // Check if the price container exists before setting text to avoid errors
+    const priceContainer = document.getElementById("price");
+    if(priceContainer) {
+        priceContainer.textContent = formatINR(p.price);
+        
+        // Add Free Shipping label if not present (restoring it from Idle state removal)
+        if(!document.querySelector('.shipping')) {
+            const shippingDiv = document.createElement('div');
+            shippingDiv.className = 'shipping';
+            shippingDiv.textContent = 'Free Shipping';
+            document.querySelector('.price-section').appendChild(shippingDiv);
+        }
+    }
+
+    document.getElementById("counterCurrent").textContent = String(index + 1).padStart(2, "0");
+    document.getElementById("counterTotal").textContent = products.length;
+
+    document.getElementById("specs").innerHTML = p.specs.map((s, i) => `
+        <div class="spec">
+            <span class="spec-icon">${SPEC_ICONS[i]}</span>
+            <span class="spec-value">${s}</span>
+            <span class="spec-label">${SPEC_LABELS[i]}</span>
+        </div>
+    `).join("");
+
+    renderThumbnails();
+    renderDots();
+
+    const active = document.querySelector(".thumbnail.active");
+    if (active) active.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+}
+
+function nextProduct() { loadProduct((currentIndex + 1) % products.length); }
+function prevProduct() { loadProduct((currentIndex - 1 + products.length) % products.length); }
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") nextProduct();
+    if (e.key === "ArrowLeft") prevProduct();
+});
+
+let touchX = null;
+document.querySelector(".hero-stage").addEventListener("touchstart", e => { touchX = e.touches[0].clientX; }, { passive: true });
+document.querySelector(".hero-stage").addEventListener("touchend", e => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) (dx < 0 ? nextProduct() : prevProduct());
+    touchX = null;
+}, { passive: true });
+
+/* =========================================================
+   ROTARY ENCODER DATA PARSER & BRIGHTSIGN INTEGRATION
+   ========================================================= */
+
+// ---------------------------------------------------------
+// IDLE STATE
+// Rotary position 0 = IDLE
+// ---------------------------------------------------------
+function showIdleState() {
+    console.log("Rotary position = 0 → IDLE");
+
+    const hero = document.getElementById("heroImage");
+    const skeleton = document.getElementById("heroSkeleton");
+
+    hero.classList.remove("loaded");
+    skeleton.classList.add("hidden");
+    hero.removeAttribute("src");
+
+    document.getElementById("category").textContent = "WELCOME";
+    document.getElementById("title").textContent = "Please Select a Product";
+    document.getElementById("description").textContent = "Turn the rotary controller to browse the products.";
+    
+    document.getElementById("price").textContent = "";
+    const shippingElement = document.querySelector('.shipping');
+    if(shippingElement) {
+        shippingElement.remove();
+    }
+
+    document.getElementById("specs").innerHTML = "";
+    document.getElementById("counterCurrent").textContent = "00";
+    document.getElementById("counterTotal").textContent = products.length;
+
+    // Remove active product selection from thumbnails
+    document.querySelectorAll(".thumbnail").forEach(el => {
+        el.classList.remove("active");
+    });
+
+    document.querySelectorAll(".dot").forEach(el => {
+        el.classList.remove("active");
+    });
+}
+
+// ---------------------------------------------------------
+// ROTARY DATA PARSER
+// 0  = IDLE, 1 = Product 1 ... 20 = Product 20
+// ---------------------------------------------------------
+function parseRotaryData(dataString) {
+    console.log("Rotary data received:", dataString);
+
+    // Accept 0–20, with either 1 or 2 digits
+    const regex = /X002B\[Dr=(\d{1,2})\]/;
+    const match = dataString.match(regex);
+
+    if (!match || !match[1]) {
+        console.log("Invalid rotary message:", dataString);
+        return;
+    }
+
+    const position = parseInt(match[1], 10);
+    console.log("Rotary position:", position);
+
+    // -----------------------------------------------------
+    // POSITION 0 = IDLE
+    // -----------------------------------------------------
+    if (position === 0) {
+        showIdleState();
+        return;
+    }
+
+    // -----------------------------------------------------
+    // POSITION 1–20 = PRODUCT 1–20
+    // -----------------------------------------------------
+    if (position >= 1 && position <= products.length) {
+        // Convert rotary number to JS array index
+        const targetIndex = position - 1;
+        
+        console.log("Loading Product:", position, "Array index:", targetIndex);
+        loadProduct(targetIndex);
+        return;
+    }
+
+    // -----------------------------------------------------
+    // INVALID POSITION
+    // -----------------------------------------------------
+    console.log("Rotary position outside product range:", position);
+}
+
+// ---------------------------------------------------------
+// BRIGHTSIGN MESSAGE PORT
+// ---------------------------------------------------------
+if (typeof BSMessagePort !== 'undefined') {
+    console.log("BrightSign MessagePort detected");
+    
+    const bsPort = new BSMessagePort();
+    bsPort.onmessage = function(msg) {
+        console.log("BrightSign message received:", msg.data);
+        parseRotaryData(msg.data);
+    };
+} else {
+    console.log("BSMessagePort is NOT available");
+}
+
+// ---------------------------------------------------------
+// START IN IDLE STATE
+// ---------------------------------------------------------
+showIdleState();
+renderThumbnails(); // Call this once to ensure thumbnails are visible in Idle state
+renderDots();       // Call this once to ensure dots are visible in Idle state
+
+// ---------------------------------------------------------
+// DEBUG SIMULATOR FOR LOCAL WEB BROWSER TESTING
+// (Only loaded if BSMessagePort is not defined)
+// ---------------------------------------------------------
+if (typeof BSMessagePort === 'undefined') {
+    // Inject simulator styles dynamically
+    const style = document.createElement('style');
+    style.textContent = `
+        #debugSimulator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(16, 20, 46, 0.95);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius);
+            padding: 16px;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            width: 300px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            transition: opacity 0.3s ease, transform 0.3s ease, width 0.3s, padding 0.3s;
+        }
+        #debugSimulator.minimized {
+            width: 150px;
+            padding: 10px;
+        }
+        .sim-title {
+            font-weight: 700;
+            font-size: 13px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #debugSimulator.minimized .sim-title {
+            margin-bottom: 0;
+        }
+        .sim-close-btn {
+            background: rgba(255,255,255,0.08);
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .sim-close-btn:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.15);
+        }
+        .sim-body {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        #debugSimulator.minimized .sim-body {
+            display: none;
+        }
+        .sim-slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .sim-slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        .sim-slider {
+            width: 100%;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .sim-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .sim-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            border-radius: 4px;
+            padding: 4px 0;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .sim-btn:hover {
+            background: rgba(124, 108, 255, 0.15);
+            border-color: var(--accent-soft);
+            color: var(--text);
+        }
+        .sim-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--text);
+            font-weight: bold;
+        }
+        .sim-log {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 4px;
+            padding: 6px;
+            font-family: monospace;
+            font-size: 10px;
+            color: var(--accent-soft);
+            word-break: break-all;
+            max-height: 60px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Create simulator element
+    const simDiv = document.createElement('div');
+    simDiv.id = 'debugSimulator';
+    simDiv.innerHTML = `
+        <div class="sim-title">
+            <span>Rotary Simulator</span>
+            <button class="sim-close-btn" id="simToggle">Minimize</button>
+        </div>
+        <div class="sim-body">
+            <div class="sim-slider-container">
+                <div class="sim-slider-header">
+                    <span>Position (0-20)</span>
+                    <span id="simVal">0 (Idle)</span>
+                </div>
+                <input type="range" class="sim-slider" id="simRange" min="0" max="20" value="0">
+            </div>
+            <div class="sim-buttons-grid" id="simButtons"></div>
+            <div class="sim-log" id="simLog">No events simulated yet.</div>
+        </div>
+    `;
+    document.body.appendChild(simDiv);
+
+    // Setup interactive controls
+    const range = document.getElementById('simRange');
+    const valDisplay = document.getElementById('simVal');
+    const btnGrid = document.getElementById('simButtons');
+    const log = document.getElementById('simLog');
+    const toggle = document.getElementById('simToggle');
+
+    // Add buttons 0 to 20
+    for (let i = 0; i <= 20; i++) {
+        const btn = document.createElement('button');
+        btn.className = `sim-btn ${i === 0 ? 'active' : ''}`;
+        btn.textContent = i;
+        btn.onclick = () => updateSimValue(i);
+        btnGrid.appendChild(btn);
+    }
+
+    function updateSimValue(val) {
+        range.value = val;
+        valDisplay.textContent = val === 0 ? '0 (Idle)' : val;
+        
+        // Update button active state
+        document.querySelectorAll('.sim-btn').forEach((btn, index) => {
+            if (index === val) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+
+        // Simulate rotary serial command sending to parseRotaryData
+        const command = `X002B[Dr=${val}]`;
+        log.textContent = `Sent: "${command}"`;
+        parseRotaryData(command);
+    }
+
+    range.oninput = (e) => {
+        updateSimValue(parseInt(e.target.value, 10));
+    };
+
+    toggle.onclick = () => {
+        const isMin = simDiv.classList.toggle('minimized');
+        toggle.textContent = isMin ? 'Expand' : 'Minimize';
+    };
+}
+</script>
+</body>
+</html>
